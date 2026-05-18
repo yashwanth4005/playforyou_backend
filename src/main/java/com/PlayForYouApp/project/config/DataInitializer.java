@@ -1,47 +1,35 @@
 package com.PlayForYouApp.project.config;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
+import com.PlayForYouApp.project.entities.User;
+import com.PlayForYouApp.project.enums.Role;
+import com.PlayForYouApp.project.repositories.UserRepository;
 
-@Configuration
-public class CorsConfig {
+@Component
+public class DataInitializer implements CommandLineRunner {
 
-    @Bean
-    public CorsFilter corsFilter() {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-        CorsConfiguration config = new CorsConfiguration();
+    public DataInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
-        config.setAllowCredentials(true);
+    @Override
+    public void run(String... args) {
+        if (userRepository.existsByEmail("admin@playforyou.com")) {
+            return;
+        }
 
-        config.setAllowedOrigins(Arrays.asList(
-                "https://playforyou.netlify.app"
-        ));
-
-        config.setAllowedHeaders(Arrays.asList(
-                "Origin",
-                "Content-Type",
-                "Accept",
-                "Authorization"
-        ));
-
-        config.setAllowedMethods(Arrays.asList(
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "OPTIONS"
-        ));
-
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsFilter(source);
+        User admin = new User();
+        admin.setName("PlayForYou Admin");
+        admin.setEmail("admin@playforyou.com");
+        admin.setPassword(passwordEncoder.encode("Admin@123"));
+        admin.setRole(Role.ROLE_ADMIN);
+        userRepository.save(admin);
     }
 }
